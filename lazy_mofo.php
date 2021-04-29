@@ -64,6 +64,7 @@ class lazy_mofo{
     public $cast_user_function = array();       // user function for casting data, example : $lm->cast_function['field_name'] = 'my_casting_function'
 
     public $return_to_edit_after_insert = true; // redirect to edit screen after adding or updating a record. if false, user is sent back to grid view.
+    public $return_to_insert = true;            // redirect to insert (if return_to_edit_after_insert is true)
     public $return_to_edit_after_update = true; 
 
     public $redirect_using_js = false;          // redirect to a page using java-script instead of header modification by means of PHP. 
@@ -269,7 +270,12 @@ class lazy_mofo{
             $action = 'action=edit&';
 
         // redirect user
-        $url = $this->get_uri_path() . "{$action}_success=1&$this->identity_name=$id&" . $this->get_qs(''); // do carry items defined in query_string_list, '' removes the default
+        if($this->return_to_insert)
+            $url = $this->get_uri_path() . "{$action}_success=1&" . $this->get_qs(''); // do carry items defined in query_string_list, '' removes the default
+        else
+            $url = $this->get_uri_path() . "{$action}_success=1&$this->identity_name=$id&" . $this->get_qs(''); // do carry items defined in query_string_list, '' removes the default
+
+            
         $this->redirect($url, $id);
 
     }
@@ -415,6 +421,7 @@ class lazy_mofo{
         // returns: false on error, id returned on success
 
         $columns = $this->get_columns();
+        $prev_key = null;
 
         if(mb_strlen($this->table) == 0 || count($columns) == 0){
             $this->display_error("missing tablename, or get_columns() failed", 'insert()');
@@ -749,7 +756,7 @@ class lazy_mofo{
         if(mb_strlen($success) > 0)
             $html .= "<div class='lm_success'><b>$success</b></div>\n";
         
-        $html .= "<table cellpadding='2' cellspacing='1' border='0' class='lm_form'>\n";
+        $html .= "<table id='lm_table' cellpadding='2' cellspacing='1' border='0' class='lm_form'>\n";
 
         if(mb_strlen($title) > 0)
             $html .= "<tr>\n    <th colspan='2'>$title</th>\n</tr>\n";
@@ -1013,7 +1020,7 @@ class lazy_mofo{
         if($count > 30)
             $html .= $pagination_button_bar;
 
-        $html .= "<table cellpadding='2' cellspacing='1' border='0' width='100%' class='lm_grid'>\n";
+        $html .= "<table id='lm_table' cellpadding='2' cellspacing='1' border='0' width='100%' class='lm_grid'>\n";
         $html .= $head;
 
         // print rows
@@ -1754,7 +1761,7 @@ class lazy_mofo{
             $arr = $sth->errorInfo();
             $error = $arr[2];
             $this->display_error("$error\nsql: $sql\narr_sql_param: " . print_r($sql_param, true), 'get_columns');
-            return $columns;
+            return; // $columns;
         }
 
         $i = 0;
